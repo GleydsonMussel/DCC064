@@ -52,6 +52,7 @@ catkin_package(
 
 ## Include directories
 include_directories(
+  include
   ${catkin_INCLUDE_DIRS}
 )
 
@@ -68,4 +69,9 @@ include_directories(
 catkin_install_python(PROGRAMS
   src/send_img_node.py
   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+)
+
+# Instalar o módulo CameraHandler
+install(DIRECTORY include/camera_pkg
+  DESTINATION ${CATKIN_PACKAGE_PYTHON_DESTINATION}
 )
