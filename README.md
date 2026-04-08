@@ -22,3 +22,8 @@ Recomenda-se utilizar o dev-container, o que pode ser aberto e utilizado pressio
 
 ### Configura'c~ao da c^amera
 
+```console
+sudo apt update
+sudo apt install python3-picamera2 -y
+```
+

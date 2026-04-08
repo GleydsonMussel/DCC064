@@ -4,6 +4,8 @@ import rospy
 import uuid
 from sensor_msgs.msg import CompressedImage, Image
 from std_msgs.msg import String
+import cv2
+from picamera2 import Picamera2
 
 def main():
     # Inicia No
