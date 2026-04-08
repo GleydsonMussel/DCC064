@@ -1,0 +1,3 @@
+<launch>
+  <node pkg="camera_pkg" type="send_img_node.py" name="send_img_node" output="screen"></node>
+</launch>
