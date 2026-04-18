@@ -2,28 +2,30 @@
 
 Repositorio para codigos do trabalho da disciplina DCC064, Sistemas Distribuidos.
 
+## Git
+
+### Submodulos
+Para o ROS conseguir acessar e coletar `frames` com a câmera da Rasp, é necessário ter o submódulo baixado, sendo assim, 
+execute logo após clonar:
+```console
+git submodule update --recursive --init
+``` 
 ## ROS
 
-### Docker
-
-Para testar/desenvolver sem ter a Raspberry em maos, 'e poss'ivel utilizar o Docker:
-
-Para ter a arquitetura `ARM` em um X86, 'e necessario rodar:
+### Buildar
+Para buildar:
 ```console
-sudo docker run --privileged --rm tonistiigi/binfmt --install all
-```
-Feito isso, builde o container:
-```console
-docker compose up --build
+colcon build --cmake-args -DCMAKE_BUILD_TYPE=Release
 ```
 
-Recomenda-se utilizar o dev-container, o que pode ser aberto e utilizado pressionando:
-`Ctrl` + `Shift` + `p`.
-
-### Configura'c~ao da c^amera
-
+### Launch
+Para dar `Launch`:
 ```console
-sudo apt update
-sudo apt install python3-picamera2 -y
+ros2 launch camera_pkg system.launch.py
 ```
 
+### Rviz
+Para rodar o `rviz`, no intuito de visualizar as imagens publicadas:
+```console
+ros2 run rviz2 rviz2
+```
