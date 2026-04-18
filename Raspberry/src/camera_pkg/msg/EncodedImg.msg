@@ -1,4 +1,0 @@
-Header header
-
-sensor_msgs/CompressedImage img
-std_msgs/String uuid
