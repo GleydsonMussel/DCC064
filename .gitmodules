@@ -1,0 +1,3 @@
+[submodule "Raspberry/src/camera_ros"]
+	path = Raspberry/src/camera_ros
+	url = https://github.com/christianrauch/camera_ros.git
