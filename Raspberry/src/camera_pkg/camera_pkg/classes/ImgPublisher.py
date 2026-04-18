@@ -11,7 +11,7 @@ class ImgPublisher(Node):
         # Usando construtor de Node
         super().__init__('img_publisher')
         # Frequência desejada para publicação (Hz)
-        self.desired_pub_frequency = 24
+        self.desired_pub_frequency = 15
         # Dispositivo de orígem para as imagens
         self.device = device
         # Inicializando campo que armazena as imagens recebidas
@@ -41,10 +41,9 @@ class ImgPublisher(Node):
     def img_raw_callback(self, msg):
         try:
             self.cv_image = self.bridge.imgmsg_to_cv2(msg, desired_encoding='bgr8')
-            out_msg = self.bridge.cv2_to_imgmsg(self.cv_image, encoding='bgr8')
-            out_msg.header.stamp = self.get_clock().now().to_msg()
-            out_msg.header.frame_id = self.imgs_frame_id
-            self.debug_img_publisher.publish(out_msg)
+            # Publica msg original direto, sem reconverter
+            msg.header.frame_id = self.imgs_frame_id
+            self.debug_img_publisher.publish(msg)
         except Exception as e:
             self.get_logger().error(f"Erro no img_raw_callback: {e}")
             self.cv_image = None
@@ -67,5 +66,5 @@ class ImgPublisher(Node):
                 self.get_logger().error(f"Erro no timer_callback: {e}")
             finally:
                 self.cv_image = None
-        else:
-            self.get_logger().warn(f"No new Image to Publish")
+        #else:
+            #self.get_logger().warn(f"No new Image to Publish")

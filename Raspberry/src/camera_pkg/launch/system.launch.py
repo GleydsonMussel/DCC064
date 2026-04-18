@@ -12,7 +12,8 @@ def generate_launch_description():
             parameters=[{
                 'width': 640,
                 'height': 480,
-                'format': 'RGB888',  # ← adiciona essa linha
+                'format': 'RGB888',  
+                'framerate': 30,
             }]
         ),
 
