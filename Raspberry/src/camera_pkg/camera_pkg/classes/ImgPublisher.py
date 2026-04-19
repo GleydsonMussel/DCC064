@@ -11,29 +11,27 @@ from ament_index_python.packages import get_package_share_directory
 
 class ImgPublisher(Node):
     
-    def __init__(self, device:str="rasp1"):
+    def __init__(self):
         # Usando construtor de Node
         super().__init__('img_publisher')
-        # Frequência desejada para publicação (Hz)
-        self.desired_pub_frequency = 15
-        # Dispositivo de orígem para as imagens
-        self.device = device
-        # Inicializando campo que armazena as imagens recebidas
-        self.cv_image = None
         # Inicializa campo para os parâmetros gerais
         self.general_params = None
         # Inicializa campo para os parâmetros de dispositivo
         self.device_params = None
+        # Carrega parâmetros
+        self.load_config()
+        # Frequência desejada para publicação (Hz)
+        self.desired_pub_frequency = 15
+        # Inicializando campo que armazena as imagens recebidas
+        self.cv_image = None
         # Define Frame Id para Imagens
-        self.imgs_frame_id = self.device+"_camera_frame"
+        self.imgs_frame_id = self.device_params["device_name"]+"_camera_frame"
         # Cria CvBridge para converter formatos de imagens
         self.bridge = CvBridge()
         # Cria Publishers
         self.create_pubs()
         # Cria Subscribers
         self.create_subs()
-        # Carrega parâmetros
-        self.load_config()
         # Criando Timer Callback 
         timer_period = 1/self.desired_pub_frequency  # seconds
         self.timer = self.create_timer(timer_period, self.timer_callback)
@@ -51,8 +49,8 @@ class ImgPublisher(Node):
 
     # Criando Publishers
     def create_pubs(self):
-        self.debug_img_publisher = self.create_publisher(Image, "/debug_"+self.device+"_camera", 10)
-        self.img_publisher = self.create_publisher(RaspImg, "/"+self.device+"_camera_output", 10) 
+        self.debug_img_publisher = self.create_publisher(Image, "/debug_"+self.device_params["device_name"]+"_camera", 10)
+        self.img_publisher = self.create_publisher(RaspImg, "/"+self.device_params["device_name"]+"_camera_output", 10) 
     
     # Criando Subscriber
     def create_subs(self):
@@ -89,7 +87,7 @@ class ImgPublisher(Node):
                 msg.device_uuid = self.device_params["uuid"]
                 msg.original_width = ori_width
                 msg.original_height = ori_height
-                msg.comp_image = comp_img
+                msg.comp_img = comp_img
                 # Publica mensagem
                 self.img_publisher.publish(msg)
             except Exception as e:

@@ -2,4 +2,4 @@ std_msgs/Header header
 string device_uuid
 int32 original_width
 int32 original_height
-sensor_msgs/CompressedImage comp_image
+sensor_msgs/CompressedImage comp_img
