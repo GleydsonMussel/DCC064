@@ -75,7 +75,8 @@ ros-jazzy-image-transport \
 ros-jazzy-compressed-image-transport \
 ros-jazzy-cv-bridge \
 ros-jazzy-vision-opencv \
-ros-jazzy-tf2-tools
+ros-jazzy-tf2-tools \
+ros-jazzy-rosbridge-suite
 
 # -------------------------------------------------
 # rosdep

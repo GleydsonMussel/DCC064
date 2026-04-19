@@ -15,6 +15,9 @@ setup(
         # launch files
         (os.path.join('share', package_name, 'launch'),
          glob('launch/*.launch.py')),
+        # config files
+        (os.path.join('share', package_name, 'config'),
+        glob('camera_pkg/config/*.yml')),
     ],
     install_requires=['setuptools'],
     zip_safe=True,

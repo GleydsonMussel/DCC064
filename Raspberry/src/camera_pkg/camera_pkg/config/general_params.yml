@@ -1,0 +1,6 @@
+img_format:
+  img_target_encode: ".jpg"
+  img_target_format: "jpeg"
+  width_target: 640
+  height_target: 640
+is_production: false
