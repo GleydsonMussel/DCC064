@@ -2,9 +2,7 @@
 set -e
 
 # =====================================================
-# Raspberry Pi 4 + Ubuntu Server 24.04 ARM64
-# ROS 2 JAZZY + ROSBRIDGE
-# Stable version for Noble
+# Qualquer Host que tenha Python >= 3.11.x
 # =====================================================
 
 echo "=================================================="
@@ -15,7 +13,6 @@ echo "=================================================="
 # Update system
 # -------------------------------------------------
 sudo apt update
-sudo apt upgrade -y
 
 # -------------------------------------------------
 # Base packages
@@ -39,20 +36,20 @@ tmux \
 htop \
 net-tools
 
+# -------------------------------------------------
+# Creating venv
+# -------------------------------------------------
+echo "Creating Venv"
+python3 -m venv ./Host/Python/venv
+./Host/Python/venv/bin/pip install --upgrade pip
+./Host/Python/venv/bin/pip install -r ./Host/Python/config/requirements.txt
+
 echo ""
 echo "=================================================="
 echo " INSTALL COMPLETE "
 echo "=================================================="
 echo ""
 echo "Run:"
-echo "source ~/.bashrc"
+echo "source ./Host/Python/venv/bin/activate"
 echo ""
-echo "Test:"
-echo "ros2 topic list"
-echo ""
-echo "Rosbridge:"
-echo "ros2 launch rosbridge_server rosbridge_websocket_launch.xml"
-echo ""
-echo "Recommended:"
-echo "sudo reboot"
 echo "=================================================="

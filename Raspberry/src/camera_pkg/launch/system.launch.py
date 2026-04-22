@@ -30,7 +30,7 @@ def generate_launch_description():
             name='rosbridge_websocket',
             output='screen',
             parameters=[{
-                'port': 9999,
+                'port': 10001,
             }]
         ),
     ])
