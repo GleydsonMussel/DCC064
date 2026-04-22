@@ -4,8 +4,21 @@ import json
 import base64
 import cv2
 import numpy as np
+import yaml
+import os
 
+def get_parameters():
+    # Caminho do diretório config relativo a este arquivo .py
+    config_dir = os.path.join(os.path.dirname(__file__), 'config')
+    # Lê e extrai parâmetros
+    with open(os.path.join(config_dir, 'general_config.yml')) as f:
+        general_params = yaml.safe_load(f)
+        f.close()
+    # Retosna Parâmetros
+    return general_params
+        
 async def consume():
+    
     uri = "ws://192.168.0.245:9999"
     async with websockets.connect(uri) as ws:
         # Assina o tópico

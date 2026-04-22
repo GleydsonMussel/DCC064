@@ -8,6 +8,7 @@ from cv_bridge import CvBridge
 import yaml
 import os
 from ament_index_python.packages import get_package_share_directory
+from getmac import get_mac_address
 
 class ImgPublisher(Node):
     
@@ -46,6 +47,7 @@ class ImgPublisher(Node):
         # Lê o arquivo da rasp_parameters
         with open(os.path.join(config_dir, 'rasp_config.yml')) as f:
             self.device_params = yaml.safe_load(f)
+            f.close()
 
     # Criando Publishers
     def create_pubs(self):
@@ -84,7 +86,7 @@ class ImgPublisher(Node):
                 msg = RaspImg()
                 msg.header.stamp = self.get_clock().now().to_msg()
                 msg.header.frame_id = self.imgs_frame_id
-                msg.device_uuid = self.device_params["uuid"]
+                msg.mac_adress = str(get_mac_address())
                 msg.original_width = ori_width
                 msg.original_height = ori_height
                 msg.comp_img = comp_img

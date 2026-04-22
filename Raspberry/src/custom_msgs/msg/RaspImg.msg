@@ -1,5 +1,5 @@
 std_msgs/Header header
-string device_uuid
+string mac_adress
 int32 original_width
 int32 original_height
 sensor_msgs/CompressedImage comp_img
