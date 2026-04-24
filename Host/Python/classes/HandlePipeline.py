@@ -7,12 +7,12 @@ import numpy as np
 
 class HandlePipeline():
     
-    def __init__(self, origin_ip, origin_port, destiny_ip, destiny_port, mac_adress, ori_device_name):
+    def __init__(self, origin_ip, origin_port, destiny_ip, destiny_port, mac_adress, origin_device_name):
         # Parametros para recebimento de dados
         self.origin_ip = origin_ip
         self.origin_port = origin_port
         self.origin_mac_adress = mac_adress
-        self.ori_device_name = ori_device_name
+        self.origin_device_name = origin_device_name
         # Parametros para envio de dados
         self.out_url = "ws://"+destiny_ip+":"+destiny_port 
         
@@ -67,7 +67,7 @@ class HandlePipeline():
         message = {
             "image": jpg_bytes,
             "ori_mac_adress": self.origin_mac_adress, 
-            "ori_device_name": self.ori_device_name
+            "origin_device_name": self.origin_device_name
         }
         # Envia mensagem
         await self.out_ws.send(json.dumps(message))

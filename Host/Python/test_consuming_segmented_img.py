@@ -5,7 +5,7 @@ import base64
 import cv2
 import numpy as np
 
-
+# Decoda e exibe imagem exibindo janela da OpenCV
 async def decode_and_show(data):
     try:
         jpg_b64 = data["image"]
@@ -20,18 +20,17 @@ async def decode_and_show(data):
 
             print(
                 "Recebido de:",
-                data.get("ori_device_name"),
+                data.get("origin_device_name"),
                 "| MAC:",
-                data.get("ori_mac_adress")
+                data.get("origin_mac_adress")
             )
 
     except Exception as e:
         print("Erro ao decodificar frame:", e)
 
-
+# Consome imagens recebidas via websocket
 async def consume():
     uri = "ws://127.0.0.1:9000"
-
     while True:  # loop de reconexão
         try:
             print("Conectando em", uri)

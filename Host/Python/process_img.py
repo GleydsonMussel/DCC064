@@ -7,7 +7,7 @@ async def main(img_handler, is_video:bool=False):
     # Inicializa vetor com handlers
     handler_objs = []
     # Percorre itens
-    for ori_device_name, device in img_handler.general_params["devices"].items():
+    for origin_device_name, device in img_handler.general_params["devices"].items():
         # Criando handler para conexao
         handler = HandlePipeline(
             device["ip"],
@@ -15,7 +15,7 @@ async def main(img_handler, is_video:bool=False):
             "127.0.0.1",
             device["destiny_port"],
             device["mac_adress"],
-            ori_device_name
+            origin_device_name
         )
         await handler.start_sender()
         handler_objs.append(handler)
