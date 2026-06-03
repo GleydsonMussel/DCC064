@@ -5,4 +5,4 @@ devices:
     port: "10001"
     destiny_port: "9000"
 model: "./Host/Python/models/yolo26n-seg.pt"
-is_video: true
+is_video: true 
