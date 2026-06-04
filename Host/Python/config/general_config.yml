@@ -1,8 +1,8 @@
 devices:
   rasp1:
-    mac_adress: "ALAL"
+    mac_adress: "e4:5f:01:40:49:fe"
     ip: "192.168.0.245"
     port: "10001"
     destiny_port: "9000"
 model: "./Host/Python/models/yolo26n-seg.pt"
-is_video: true 
+is_video: false 

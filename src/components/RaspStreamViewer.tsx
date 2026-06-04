@@ -84,6 +84,7 @@ export function RaspStreamViewer({
   const [fitContain, setFitContain] = useState(true);
   const [imgLoaded, setImgLoaded] = useState(false);
   const viewportRef = useRef<HTMLDivElement>(null);
+  const prevFramesLengthRef = useRef<number>(0);
 
   const total = frames.length;
   const current = frames[index];
@@ -131,11 +132,22 @@ export function RaspStreamViewer({
   }, []);
 
   useEffect(() => {
-    if (playing) {
-      setImgLoaded(false);
-      setIndex(frames.length > 0 ? frames.length - 1 : 0);
+    const prev = prevFramesLengthRef.current;
+    const next = frames.length;
+    prevFramesLengthRef.current = next;
+
+    const isAppend = next > prev;
+
+    if (isAppend) {
+      // Novos frames chegando via WebSocket: só avança se estiver "ao vivo"
+      if (playing || index === prev - 1) {
+        setImgLoaded(false);
+        setIndex(next - 1);
+      }
     } else {
+      // Fonte trocada completamente: reset
       setIndex(0);
+      setPlaying(false);
       setImgLoaded(false);
     }
   }, [frames]); // eslint-disable-line react-hooks/exhaustive-deps

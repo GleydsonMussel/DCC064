@@ -23,25 +23,30 @@ class HandlePipeline():
     # Recebe assincronamente todas as imagens
     async def consume(self, img_handler):
         uri = "ws://"+self.origin_ip+":"+self.origin_port
-        async with websockets.connect(uri) as ws:
-            # Assina o tópico
-            subscribe = {
-                "op": "subscribe",
-                "topic": "/rasp1_camera_output",
-                "type": "custom_msgs/RaspImg"
-            }
-            await ws.send(json.dumps(subscribe))
-            # Disseca mensagem recebida
-            async for msg in ws:
-                data = json.loads(msg)
-                img_data = base64.b64decode(data['msg']['comp_img']['data'])
-                img_array = np.frombuffer(img_data, dtype=np.uint8)
-                frame = cv2.imdecode(img_array, cv2.IMREAD_COLOR)
-                if frame is not None:
-                    # Passa para segmentacao
-                    annoted_img = img_handler.segment_objs(frame)
-                    # Envia imagem anotada
-                    await self.send(annoted_img)
+        while True:
+            try:
+                async with websockets.connect(uri) as ws:
+                    print(f"Conectado em {uri}")
+                    subscribe = {
+                        "op": "subscribe",
+                        "topic": "/rasp1_camera_output",
+                        "type": "custom_msgs/RaspImg"
+                    }
+                    await ws.send(json.dumps(subscribe))
+                    async for msg in ws:
+                        data = json.loads(msg)
+                        img_data = base64.b64decode(data['msg']['comp_img']['data'])
+                        img_array = np.frombuffer(img_data, dtype=np.uint8)
+                        frame = cv2.imdecode(img_array, cv2.IMREAD_COLOR)
+                        if frame is not None:
+                            annoted_img = img_handler.segment_objs(frame)
+                            await self.send(annoted_img)
+            except (ConnectionRefusedError, OSError):
+                print(f"{uri} indisponível, tentando novamente em 2s...")
+                await asyncio.sleep(2)
+            except Exception as e:
+                print(f"Erro em consume ({uri}): {e}")
+                await asyncio.sleep(2)
     
     # Recebe assincronamente videos
     async def video_test(self, video_path=0, img_handler=None):
@@ -69,6 +74,10 @@ class HandlePipeline():
             "ori_mac_adress": self.origin_mac_adress, 
             "origin_device_name": self.origin_device_name
         }
+        # Dump da mensagem
+        with open("./exemplo_mensagens.json", 'w') as file:
+            file.write(json.dumps(message))
+            
         # Envia mensagem
         await self.out_ws.send(json.dumps(message))
         
