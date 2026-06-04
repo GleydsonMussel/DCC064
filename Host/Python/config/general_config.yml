@@ -4,5 +4,5 @@ devices:
     ip: "192.168.0.245"
     port: "10001"
     destiny_port: "9000"
-model: "./Host/Python/models/yolo26n-seg.pt"
+model: "./Host/Python/models/yolo26n.pt"
 is_video: false 
