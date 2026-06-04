@@ -3,9 +3,12 @@
 # Venv
 Host/Python/meu_venv/*
 # Node modules
-Host/frontend/node_modules/*
+Host/Frontend/node_modules/*
 # Package_lock
-Host/frontend/package-lock.json
+Host/Frontend/package-lock.json
+# Next Cache
+Host/Frontend/.next
+
 # dependencies
 /node_modules
 /.pnp
