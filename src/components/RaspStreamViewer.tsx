@@ -136,20 +136,17 @@ export function RaspStreamViewer({
     const next = frames.length;
     prevFramesLengthRef.current = next;
 
-    const isAppend = next > prev;
-
-    if (isAppend) {
-      // Novos frames chegando via WebSocket: só avança se estiver "ao vivo"
-      if (playing || index === prev - 1) {
-        setImgLoaded(false);
-        setIndex(next - 1);
-      }
-    } else {
-      // Fonte trocada completamente: reset
+    if (next < prev) {
+      // Fonte trocada por array menor — reset
       setIndex(0);
       setPlaying(false);
       setImgLoaded(false);
+    } else if (!playing && next > prev && index === prev - 1) {
+      // Pausado no último frame e buffer cresceu — segue o live
+      setImgLoaded(false);
+      setIndex(next - 1);
     }
+    // Rolling buffer (next === prev) ou playing: o intervalo cuida do avanço
   }, [frames]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
