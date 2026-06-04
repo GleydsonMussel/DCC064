@@ -74,10 +74,6 @@ class HandlePipeline():
             "ori_mac_adress": self.origin_mac_adress, 
             "origin_device_name": self.origin_device_name
         }
-        # Dump da mensagem
-        with open("./exemplo_mensagens.json", 'w') as file:
-            file.write(json.dumps(message))
-            
         # Envia mensagem
         await self.out_ws.send(json.dumps(message))
         
