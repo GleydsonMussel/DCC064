@@ -8,31 +8,34 @@ import {
   useState,
   type KeyboardEvent,
 } from "react";
-import { useFrameImageUrl } from "@/hooks/useFrameImageUrl";
-import type { ConnectionStatus } from "@/hooks/useRaspWebSocket";
+import type { ConnectionStatus, LiveDisplay } from "@/hooks/useRaspWebSocket";
 import type { RaspFrameMessage } from "@/types/rasp-frame";
-import { frameLooksLikeJpeg, getDeviceLabel } from "@/lib/rasp-frame";
+import {
+  frameLooksLikeJpeg,
+  frameToDataUrl,
+  getDeviceLabel,
+} from "@/lib/rasp-frame";
 
 type RaspStreamViewerProps = {
+  live: LiveDisplay | null;
   frames: RaspFrameMessage[];
-  latestFrame: RaspFrameMessage | null;
-  frameVersion: number;
   status: ConnectionStatus;
   wsUrl: string;
   totalReceived: number;
   receivedFps: number;
   lastError: string | null;
+  onSyncHistory: () => void;
 };
 
 export function RaspStreamViewer({
+  live,
   frames,
-  latestFrame,
-  frameVersion,
   status,
   wsUrl,
   totalReceived,
   receivedFps,
   lastError,
+  onSyncHistory,
 }: RaspStreamViewerProps) {
   const [liveFollow, setLiveFollow] = useState(true);
   const [historyIndex, setHistoryIndex] = useState(0);
@@ -44,12 +47,19 @@ export function RaspStreamViewer({
     ? Math.max(0, total - 1)
     : Math.min(historyIndex, Math.max(0, total - 1));
 
-  /** Ao vivo: sempre o último frame recebido (estado dedicado, não índice do buffer). */
-  const current = liveFollow
-    ? (latestFrame ?? frames[displayIndex])
-    : frames[displayIndex];
+  const current = liveFollow ? null : frames[displayIndex];
 
-  const imageUrl = useFrameImageUrl(current, liveFollow ? frameVersion : displayIndex);
+  const imageUrl = useMemo(() => {
+    if (liveFollow) return live?.dataUrl ?? "";
+    if (!current) return "";
+    return frameToDataUrl(current);
+  }, [liveFollow, live?.dataUrl, live?.version, current, displayIndex]);
+
+  const deviceLabel = liveFollow
+    ? live?.deviceName ?? "—"
+    : current
+      ? getDeviceLabel(current)
+      : "—";
 
   const statusMeta = useMemo(() => {
     const map = {
@@ -80,6 +90,7 @@ export function RaspStreamViewer({
 
   const stepHistory = useCallback(
     (delta: number) => {
+      onSyncHistory();
       if (total === 0) return;
       setLiveFollow(false);
       setHistoryIndex((i) => {
@@ -87,7 +98,7 @@ export function RaspStreamViewer({
         return Math.max(0, Math.min(total - 1, next));
       });
     },
-    [total],
+    [total, onSyncHistory],
   );
 
   const goLive = useCallback(() => {
@@ -127,7 +138,9 @@ export function RaspStreamViewer({
     if (e.key === " ") e.preventDefault();
   };
 
-  if (total === 0) {
+  const hasStream = liveFollow ? !!live?.dataUrl : total > 0;
+
+  if (!hasStream && total === 0) {
     return (
       <div className="flex flex-col gap-8">
         <PageHeader
@@ -183,13 +196,10 @@ export function RaspStreamViewer({
 
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
-              key={liveFollow ? `live-${frameVersion}` : `hist-${displayIndex}`}
               src={imageUrl || undefined}
-              alt={
-                current
-                  ? `Frame de ${getDeviceLabel(current)}`
-                  : "Frame da câmera"
-              }
+              alt={`Frame de ${deviceLabel}`}
+              decoding="sync"
+              fetchPriority="high"
               className={`max-h-full max-w-full ${
                 fitContain ? "object-contain" : "object-cover"
               } ${imageUrl ? "opacity-100" : "opacity-0"}`}
@@ -201,7 +211,7 @@ export function RaspStreamViewer({
 
             <div className="absolute left-3 top-3 flex flex-wrap items-center gap-2 sm:left-4 sm:top-4">
               <span className="rounded-md bg-black/60 px-2.5 py-1 font-mono text-xs text-white backdrop-blur-sm">
-                {current ? getDeviceLabel(current) : "—"}
+                {deviceLabel}
               </span>
               {liveFollow && status === "connected" && (
                 <span className="flex items-center gap-1.5 rounded-md bg-red-600/90 px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-white">
@@ -299,18 +309,34 @@ export function RaspStreamViewer({
         </section>
 
         <aside className="flex min-w-0 flex-col gap-4">
-          {current && (
+          {(liveFollow ? live : current) && (
             <div className="rounded-2xl border border-zinc-200 bg-white p-4 shadow-sm dark:border-zinc-800 dark:bg-zinc-900/80 sm:p-5">
               <h2 className="mb-3 text-sm font-semibold text-zinc-900 dark:text-zinc-100">
                 Dispositivo
               </h2>
               <dl className="grid gap-2 text-sm">
-                <MetaRow label="Nome" value={current.origin_device_name} />
-                <MetaRow label="MAC" value={current.ori_mac_adress} />
+                <MetaRow
+                  label="Nome"
+                  value={
+                    liveFollow
+                      ? (live?.deviceName ?? "—")
+                      : (current?.origin_device_name ?? "—")
+                  }
+                />
+                <MetaRow
+                  label="MAC"
+                  value={
+                    liveFollow
+                      ? (live?.mac ?? "—")
+                      : (current?.ori_mac_adress ?? "—")
+                  }
+                />
                 <MetaRow
                   label="Formato"
                   value={
-                    frameLooksLikeJpeg(current) ? "JPEG (base64)" : "Desconhecido"
+                    liveFollow || (current && frameLooksLikeJpeg(current))
+                      ? "JPEG"
+                      : "Desconhecido"
                   }
                 />
               </dl>

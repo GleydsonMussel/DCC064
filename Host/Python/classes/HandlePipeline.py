@@ -62,11 +62,26 @@ class HandlePipeline():
     async def send(self, annotated_img):
         if self.out_ws is None:
             return
-        # compressão JPEG
-        success, buffer = cv2.imencode('.jpg', annotated_img)
+        if annotated_img is None:
+            return
+
+        h, w = annotated_img.shape[:2]
+        max_w = 640
+        if w > max_w:
+            scale = max_w / w
+            annotated_img = cv2.resize(
+                annotated_img,
+                (max_w, int(h * scale)),
+                interpolation=cv2.INTER_AREA,
+            )
+
+        success, buffer = cv2.imencode(
+            '.jpg',
+            annotated_img,
+            [int(cv2.IMWRITE_JPEG_QUALITY), 72],
+        )
         if not success:
             return
-        # base64 encode
         jpg_bytes = base64.b64encode(buffer).decode('utf-8')
         # Monta mensagem
         message = {

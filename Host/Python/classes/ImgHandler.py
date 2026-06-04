@@ -9,11 +9,15 @@ class ImgHandler:
         self.model = YOLO(self.general_params["model"])
     
     def segment_objs(self, frame):
-        # Tenta segmentar 
-        results = self.model(frame)
-        if results is not None:
+        # Inferência mais rápida: resolução menor, sem logs, stream interno
+        results = self.model.predict(
+            frame,
+            imgsz=416,
+            verbose=False,
+            stream=False,
+        )
+        if results:
             return results[0].plot()
-        # Retorna None se nao conseguiu segmentar
         return None
 
     def get_parameters(self):
