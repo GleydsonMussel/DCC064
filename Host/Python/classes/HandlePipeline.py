@@ -4,6 +4,7 @@ import json
 import base64
 import cv2
 import numpy as np
+import time
 
 class HandlePipeline():
     
@@ -33,14 +34,25 @@ class HandlePipeline():
                         "type": "custom_msgs/RaspImg"
                     }
                     await ws.send(json.dumps(subscribe))
+                    recv_count = 0
+                    proc_count = 0
+                    t0 = time.time()
                     async for msg in ws:
                         data = json.loads(msg)
                         img_data = base64.b64decode(data['msg']['comp_img']['data'])
                         img_array = np.frombuffer(img_data, dtype=np.uint8)
                         frame = cv2.imdecode(img_array, cv2.IMREAD_COLOR)
                         if frame is not None:
+                            recv_count += 1
                             annoted_img = img_handler.segment_objs(frame)
                             await self.send(annoted_img)
+                            proc_count += 1
+                            elapsed = time.time() - t0
+                            if elapsed >= 1.0:
+                                print(f"[{self.origin_device_name}] recebimento: {recv_count / elapsed:.1f} FPS | processamento: {proc_count / elapsed:.1f} FPS")
+                                recv_count = 0
+                                proc_count = 0
+                                t0 = time.time()
             except (ConnectionRefusedError, OSError):
                 print(f"{uri} indisponível, tentando novamente em 2s...")
                 await asyncio.sleep(2)
