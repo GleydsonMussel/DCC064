@@ -2,41 +2,48 @@
 
 import { useEffect, useRef, useState } from "react";
 import { base64ToObjectUrl } from "@/lib/frame-image-url";
+import { frameToDataUrl } from "@/lib/rasp-frame";
 import type { RaspFrameMessage } from "@/types/rasp-frame";
 
-/** Object URL do JPEG do frame, sem recriar o `<img>` a cada render. */
-export function useFrameImageUrl(frame: RaspFrameMessage | undefined): string {
+/**
+ * Gera URL exibível para o frame. `version` força atualização a cada mensagem WS
+ * (não depender só da string gigante de base64 no array de deps do React).
+ */
+export function useFrameImageUrl(
+  frame: RaspFrameMessage | undefined,
+  version: number,
+): string {
   const [url, setUrl] = useState("");
-  const urlRef = useRef("");
+  const objectUrlRef = useRef<string | null>(null);
 
   useEffect(() => {
-    const revoke = (u: string) => {
-      if (u) URL.revokeObjectURL(u);
-    };
+    if (objectUrlRef.current) {
+      URL.revokeObjectURL(objectUrlRef.current);
+      objectUrlRef.current = null;
+    }
 
-    if (!frame?.image) {
-      revoke(urlRef.current);
-      urlRef.current = "";
+    if (!frame?.image || version === 0) {
       setUrl("");
       return;
     }
 
-    let objectUrl = "";
     try {
-      objectUrl = base64ToObjectUrl(frame.image);
+      const objectUrl = base64ToObjectUrl(frame.image);
+      objectUrlRef.current = objectUrl;
+      setUrl(objectUrl);
     } catch {
-      return;
+      setUrl(frameToDataUrl(frame));
     }
+  }, [frame, version]);
 
-    revoke(urlRef.current);
-    urlRef.current = objectUrl;
-    setUrl(objectUrl);
-
+  useEffect(() => {
     return () => {
-      revoke(urlRef.current);
-      urlRef.current = "";
+      if (objectUrlRef.current) {
+        URL.revokeObjectURL(objectUrlRef.current);
+        objectUrlRef.current = null;
+      }
     };
-  }, [frame?.image]);
+  }, []);
 
   return url;
 }

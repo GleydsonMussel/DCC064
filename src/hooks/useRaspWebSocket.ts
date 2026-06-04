@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { isRaspFrameMessage } from "@/lib/rasp-frame";
+import { parseRaspFrame } from "@/lib/rasp-frame";
 import type { RaspFrameMessage } from "@/types/rasp-frame";
 
 const MAX_FRAMES = 120;
@@ -10,19 +10,33 @@ const FPS_WINDOW_MS = 2000;
 
 export type ConnectionStatus = "connecting" | "connected" | "disconnected";
 
+async function messageToText(data: MessageEvent["data"]): Promise<string> {
+  if (typeof data === "string") return data;
+  if (data instanceof ArrayBuffer) {
+    return new TextDecoder().decode(data);
+  }
+  if (ArrayBuffer.isView(data)) {
+    return new TextDecoder().decode(data);
+  }
+  if (data instanceof Blob) {
+    return data.text();
+  }
+  return String(data);
+}
+
 export function useRaspWebSocket(url: string = "ws://localhost:9000") {
   const [frames, setFrames] = useState<RaspFrameMessage[]>([]);
+  const [latestFrame, setLatestFrame] = useState<RaspFrameMessage | null>(null);
+  const [frameVersion, setFrameVersion] = useState(0);
   const [status, setStatus] = useState<ConnectionStatus>("connecting");
   const [totalReceived, setTotalReceived] = useState(0);
   const [receivedFps, setReceivedFps] = useState(0);
+  const [lastError, setLastError] = useState<string | null>(null);
 
   const wsRef = useRef<WebSocket | null>(null);
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const unmountedRef = useRef(false);
   const arrivalTimesRef = useRef<number[]>([]);
-
-  const latestFrame =
-    frames.length > 0 ? frames[frames.length - 1] : undefined;
 
   useEffect(() => {
     unmountedRef.current = false;
@@ -45,7 +59,10 @@ export function useRaspWebSocket(url: string = "ws://localhost:9000") {
 
     function pushFrame(frame: RaspFrameMessage) {
       recordArrival();
+      setLastError(null);
       setTotalReceived((n) => n + 1);
+      setFrameVersion((v) => v + 1);
+      setLatestFrame(frame);
       setFrames((prev) => {
         const next = [...prev, frame];
         return next.length > MAX_FRAMES
@@ -54,20 +71,25 @@ export function useRaspWebSocket(url: string = "ws://localhost:9000") {
       });
     }
 
-    function handleMessage(raw: string) {
+    async function handleMessage(raw: MessageEvent["data"]) {
       try {
-        const parsed: unknown = JSON.parse(raw);
-        if (isRaspFrameMessage(parsed)) {
-          pushFrame(parsed);
+        const text = await messageToText(raw);
+        const parsed: unknown = JSON.parse(text);
+        const single = parseRaspFrame(parsed);
+        if (single) {
+          pushFrame(single);
           return;
         }
         if (Array.isArray(parsed)) {
           for (const item of parsed) {
-            if (isRaspFrameMessage(item)) pushFrame(item);
+            const frame = parseRaspFrame(item);
+            if (frame) pushFrame(frame);
           }
+          return;
         }
+        setLastError("Mensagem JSON sem campo image válido");
       } catch {
-        // mensagem malformada
+        setLastError("Mensagem WebSocket inválida (não é JSON)");
       }
     }
 
@@ -82,14 +104,17 @@ export function useRaspWebSocket(url: string = "ws://localhost:9000") {
         if (unmountedRef.current) return;
         setStatus("connected");
         setFrames([]);
+        setLatestFrame(null);
+        setFrameVersion(0);
         setTotalReceived(0);
+        setLastError(null);
         arrivalTimesRef.current = [];
         setReceivedFps(0);
       };
 
       ws.onmessage = (event: MessageEvent) => {
         if (unmountedRef.current) return;
-        handleMessage(event.data as string);
+        void handleMessage(event.data);
       };
 
       ws.onclose = () => {
@@ -122,8 +147,10 @@ export function useRaspWebSocket(url: string = "ws://localhost:9000") {
   return {
     frames,
     latestFrame,
+    frameVersion,
     status,
     totalReceived,
     receivedFps,
+    lastError,
   };
 }

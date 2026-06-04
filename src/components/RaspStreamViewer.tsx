@@ -15,18 +15,24 @@ import { frameLooksLikeJpeg, getDeviceLabel } from "@/lib/rasp-frame";
 
 type RaspStreamViewerProps = {
   frames: RaspFrameMessage[];
+  latestFrame: RaspFrameMessage | null;
+  frameVersion: number;
   status: ConnectionStatus;
   wsUrl: string;
   totalReceived: number;
   receivedFps: number;
+  lastError: string | null;
 };
 
 export function RaspStreamViewer({
   frames,
+  latestFrame,
+  frameVersion,
   status,
   wsUrl,
   totalReceived,
   receivedFps,
+  lastError,
 }: RaspStreamViewerProps) {
   const [liveFollow, setLiveFollow] = useState(true);
   const [historyIndex, setHistoryIndex] = useState(0);
@@ -37,9 +43,13 @@ export function RaspStreamViewer({
   const displayIndex = liveFollow
     ? Math.max(0, total - 1)
     : Math.min(historyIndex, Math.max(0, total - 1));
-  const current = frames[displayIndex];
 
-  const imageUrl = useFrameImageUrl(current);
+  /** Ao vivo: sempre o último frame recebido (estado dedicado, não índice do buffer). */
+  const current = liveFollow
+    ? (latestFrame ?? frames[displayIndex])
+    : frames[displayIndex];
+
+  const imageUrl = useFrameImageUrl(current, liveFollow ? frameVersion : displayIndex);
 
   const statusMeta = useMemo(() => {
     const map = {
@@ -120,7 +130,13 @@ export function RaspStreamViewer({
   if (total === 0) {
     return (
       <div className="flex flex-col gap-8">
-        <PageHeader statusMeta={statusMeta} wsUrl={wsUrl} receivedFps={0} totalReceived={0} />
+        <PageHeader
+          statusMeta={statusMeta}
+          wsUrl={wsUrl}
+          receivedFps={0}
+          totalReceived={0}
+          lastError={lastError}
+        />
 
         <div className="flex min-h-[min(60vh,520px)] flex-col items-center justify-center gap-6 rounded-2xl border border-dashed border-zinc-300 bg-white/70 px-6 py-14 text-center shadow-sm dark:border-zinc-700 dark:bg-zinc-900/50">
           <div className="flex size-16 items-center justify-center rounded-2xl bg-zinc-100 text-zinc-400 dark:bg-zinc-800">
@@ -150,6 +166,7 @@ export function RaspStreamViewer({
         wsUrl={wsUrl}
         receivedFps={receivedFps}
         totalReceived={totalReceived}
+        lastError={lastError}
       />
 
       <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_260px] lg:gap-8">
@@ -166,13 +183,14 @@ export function RaspStreamViewer({
 
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
+              key={liveFollow ? `live-${frameVersion}` : `hist-${displayIndex}`}
               src={imageUrl || undefined}
               alt={
                 current
                   ? `Frame de ${getDeviceLabel(current)}`
                   : "Frame da câmera"
               }
-              className={`max-h-full max-w-full transition-opacity duration-100 ${
+              className={`max-h-full max-w-full ${
                 fitContain ? "object-contain" : "object-cover"
               } ${imageUrl ? "opacity-100" : "opacity-0"}`}
               draggable={false}
@@ -323,6 +341,7 @@ function PageHeader({
   wsUrl,
   receivedFps,
   totalReceived,
+  lastError,
 }: {
   statusMeta: {
     label: string;
@@ -332,6 +351,7 @@ function PageHeader({
   wsUrl: string;
   receivedFps: number;
   totalReceived: number;
+  lastError: string | null;
 }) {
   return (
     <header className="flex flex-col gap-4 border-b border-zinc-200/80 pb-5 dark:border-zinc-800 sm:pb-6">
@@ -370,6 +390,13 @@ function PageHeader({
       <p className="break-all rounded-lg border border-zinc-200 bg-white px-3 py-2 font-mono text-xs text-zinc-600 dark:border-zinc-800 dark:bg-zinc-900/80 dark:text-zinc-400">
         {wsUrl}
       </p>
+      {lastError && totalReceived === 0 && statusMeta.label === "Conectado" && (
+        <p className="rounded-lg border border-amber-300 bg-amber-50 px-3 py-2 text-xs text-amber-900 dark:border-amber-800 dark:bg-amber-950/50 dark:text-amber-200">
+          Conectado, mas sem frames válidos: {lastError}. Confirme que{" "}
+          <code className="font-mono">process_img.py</code> está enviando para a
+          mesma porta.
+        </p>
+      )}
     </header>
   );
 }

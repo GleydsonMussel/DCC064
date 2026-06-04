@@ -6,14 +6,33 @@ export function normalizeFramesPayload(payload: RaspFramesPayload): RaspFrameMes
   return Array.isArray(payload) ? payload : [payload];
 }
 
-export function isRaspFrameMessage(value: unknown): value is RaspFrameMessage {
-  if (!value || typeof value !== "object") return false;
+/** Aceita variações de nomes de campo vindas do backend. */
+export function parseRaspFrame(value: unknown): RaspFrameMessage | null {
+  if (!value || typeof value !== "object") return null;
   const frame = value as Record<string, unknown>;
-  return (
-    typeof frame.image === "string" &&
-    typeof frame.ori_mac_adress === "string" &&
-    typeof frame.origin_device_name === "string"
-  );
+
+  const image = frame.image;
+  if (typeof image !== "string" || image.length < 32) return null;
+
+  const mac =
+    frame.ori_mac_adress ??
+    frame.origin_mac_adress ??
+    frame.mac_adress ??
+    "";
+  const name =
+    frame.origin_device_name ??
+    frame.device_name ??
+    "dispositivo";
+
+  return {
+    image: image.trim(),
+    ori_mac_adress: String(mac),
+    origin_device_name: String(name),
+  };
+}
+
+export function isRaspFrameMessage(value: unknown): value is RaspFrameMessage {
+  return parseRaspFrame(value) !== null;
 }
 
 /** Converte o campo `image` em URL exibível no `<img>`. */

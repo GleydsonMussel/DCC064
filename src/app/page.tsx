@@ -11,8 +11,15 @@ export default function Home() {
   const [wsUrlInput, setWsUrlInput] = useState(DEFAULT_WS_URL);
   const wsUrl = useMemo(() => wsUrlInput.trim() || DEFAULT_WS_URL, [wsUrlInput]);
 
-  const { frames, status, totalReceived, receivedFps } =
-    useRaspWebSocket(wsUrl);
+  const {
+    frames,
+    latestFrame,
+    frameVersion,
+    status,
+    totalReceived,
+    receivedFps,
+    lastError,
+  } = useRaspWebSocket(wsUrl);
 
   return (
     <div className="flex min-h-full flex-1 flex-col bg-zinc-100 dark:bg-zinc-950">
@@ -57,10 +64,13 @@ export default function Home() {
 
         <RaspStreamViewer
           frames={frames}
+          latestFrame={latestFrame}
+          frameVersion={frameVersion}
           status={status}
           wsUrl={wsUrl}
           totalReceived={totalReceived}
           receivedFps={receivedFps}
+          lastError={lastError}
         />
       </main>
     </div>
