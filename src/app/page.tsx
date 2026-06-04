@@ -1,10 +1,19 @@
+"use client";
+
 import { RaspStreamViewer } from "@/components/RaspStreamViewer";
-import exemploPayload from "@/data/exemplo_mensagens_1.json";
-import { normalizeFramesPayload } from "@/lib/rasp-frame";
-import type { RaspFramesPayload } from "@/types/rasp-frame";
+import { useRaspWebSocket } from "@/hooks/useRaspWebSocket";
+
+const WS_URL = "ws://localhost:9000";
 
 export default function Home() {
-  const frames = normalizeFramesPayload(exemploPayload as RaspFramesPayload);
+  const { frames, status } = useRaspWebSocket(WS_URL);
+
+  const statusLabel =
+    status === "connected"
+      ? "conectado"
+      : status === "connecting"
+        ? "conectando…"
+        : "reconectando…";
 
   return (
     <div className="relative min-h-full flex-1 overflow-hidden bg-zinc-100 dark:bg-zinc-950">
@@ -20,7 +29,7 @@ export default function Home() {
       <main className="relative mx-auto w-full max-w-6xl px-4 py-8 sm:px-6 sm:py-12 lg:py-14">
         <RaspStreamViewer
           frames={frames}
-          sourceLabel="exemplo_mensagens_1.json"
+          sourceLabel={`${WS_URL} · ${statusLabel}`}
         />
       </main>
     </div>

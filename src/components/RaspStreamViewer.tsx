@@ -131,10 +131,14 @@ export function RaspStreamViewer({
   }, []);
 
   useEffect(() => {
-    setIndex(0);
-    setPlaying(false);
-    setImgLoaded(false);
-  }, [frames]);
+    if (playing) {
+      setImgLoaded(false);
+      setIndex(frames.length > 0 ? frames.length - 1 : 0);
+    } else {
+      setIndex(0);
+      setImgLoaded(false);
+    }
+  }, [frames]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     if (!playing || !canPlay) return;
